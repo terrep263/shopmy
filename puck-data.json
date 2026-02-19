@@ -1,0 +1,41 @@
+{
+  "root": {
+    "props": {}
+  },
+  "content": [
+    {
+      "type": "HeroBlock",
+      "props": {
+        "id": "hero-1",
+        "title": "Welcome to Shop My Neighborhood",
+        "subtitle": "Discover Lake County's Beast Deals and Businesses",
+        "backgroundImage": "/images/header.jpeg"
+      }
+    },
+    {
+      "type": "BusinessGridBlock",
+      "props": {
+        "title": "Featured Businesses",
+        "limit": 6,
+        "id": "BusinessGridBlock-872d2d92-dd8a-4fa1-af85-7280ae81c1da"
+      }
+    },
+    {
+      "type": "DealGridBlock",
+      "props": {
+        "title": "Hot Deals",
+        "limit": 6,
+        "id": "DealGridBlock-37691efd-ce9e-4122-9056-d55c69093c45"
+      }
+    },
+    {
+      "type": "BlogListBlock",
+      "props": {
+        "title": "Latest Blog Posts",
+        "limit": 3,
+        "id": "BlogListBlock-a0ffb094-32e2-4276-9991-7b0ed7577ecf"
+      }
+    }
+  ],
+  "zones": {}
+}

@@ -1,0 +1,13 @@
+/* Puck Editor Styles */
+.puck-editor-container {
+  min-height: 100vh;
+}
+
+.puck-rendered-page {
+  min-height: 100vh;
+}
+
+/* Override some Puck styles to match ShopMyNeighborhood theme */
+.puck-root {
+  font-family: inherit;
+}

@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Production DATABASE_URL is set in env and prisma.config.ts (Prisma 7)
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password_hash String
+  role          Role
+  created_at    DateTime @default(now())
+
+  vendor        Vendor?
+  admin_actions AdminAction[]
+}
+
+model Business {
+  id              String   @id @default(uuid())
+  google_place_id String   @unique
+  name            String
+  address         String
+  city            String
+  category        String
+  latitude        Float
+  longitude       Float
+  claimed         Boolean  @default(false)
+  created_at      DateTime @default(now())
+
+  vendor          Vendor?
+}
+
+model Vendor {
+  id                        String   @id @default(uuid())
+  user_id                   String   @unique
+  business_id               String   @unique
+  subscription_status       SubscriptionStatus
+  subscription_plan         String?
+  subscription_expires_at   DateTime?
+  created_at                DateTime @default(now())
+
+  user       User      @relation(fields: [user_id], references: [id])
+  business   Business  @relation(fields: [business_id], references: [id])
+  deals      Deal[]
+  subscription Subscription?
+}
+
+model Deal {
+  id              String   @id @default(uuid())
+  vendor_id       String
+  title           String
+  description     String
+  price           Float
+  original_value  Float
+  expiration_date DateTime
+  status          DealStatus
+  quality_score   Int
+  created_at      DateTime @default(now())
+
+  vendor   Vendor   @relation(fields: [vendor_id], references: [id])
+  vouchers Voucher[]
+}
+
+model Voucher {
+  id             String   @id @default(uuid())
+  deal_id        String
+  uuid           String   @unique
+  customer_email String
+  status         VoucherStatus
+  issued_at      DateTime @default(now())
+  expires_at     DateTime
+
+  deal        Deal               @relation(fields: [deal_id], references: [id])
+  redemption  VoucherRedemption?
+}
+
+model VoucherRedemption {
+  id                  String   @id @default(uuid())
+  voucher_id          String   @unique
+  redeemed_by_vendor  String
+  redeemed_at         DateTime @default(now())
+
+  voucher Voucher @relation(fields: [voucher_id], references: [id])
+}
+
+model Subscription {
+  id         String   @id @default(uuid())
+  vendor_id  String   @unique
+  plan       String
+  status     SubscriptionStatus
+  expires_at DateTime
+
+  vendor Vendor @relation(fields: [vendor_id], references: [id])
+}
+
+enum Role {
+  admin
+  vendor
+  customer
+}
+
+enum SubscriptionStatus {
+  active
+  inactive
+  expired
+}
+
+enum DealStatus {
+  draft
+  published
+  pending_review
+  rejected
+}
+
+enum VoucherStatus {
+  issued
+  redeemed
+  expired
+}
+
+model City {
+  id               String   @id @default(uuid())
+  name             String   @unique
+  active           Boolean  @default(true)
+  last_imported_at DateTime?
+  created_at       DateTime @default(now())
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  google_type String
+  active      Boolean  @default(true)
+  created_at  DateTime @default(now())
+}
+
+model AdminAction {
+  id          String   @id @default(uuid())
+  admin_id    String
+  action_type String
+  entity_type String
+  entity_id   String?
+  metadata    Json?
+  created_at  DateTime @default(now())
+
+  admin User @relation(fields: [admin_id], references: [id])
+}
+
+model BrandingSettings {
+  id                String   @id @default(uuid())
+  primary_color     String   @default("#c71f37")
+  logo_url          String?
+  logo_light_url    String?
+  site_name         String   @default("Shop My Neighborhood")
+  favicon_url       String?
+  updated_at        DateTime @updatedAt
+  created_at        DateTime @default(now())
+}
