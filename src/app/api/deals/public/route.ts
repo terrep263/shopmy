@@ -1,8 +1,8 @@
-import { prisma } from "@/lib/prisma"
+import { tenantScope } from "@/lib/prismaTenant"
 
 export async function GET() {
-
-  const deals = await prisma.deal.findMany({
+  const db = await tenantScope()
+  const deals = await db.deal.findMany({
 
     where: {
       status: "published"

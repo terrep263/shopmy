@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/prisma"
+import prisma from "@/lib/prisma"
+
+const DEFAULT_TENANT_ID = "tenant_lake_county"
 
 export async function listCities() {
   return prisma.city.findMany({
@@ -7,8 +9,11 @@ export async function listCities() {
 }
 
 export async function createCity(name: string) {
+  const slug = name.toLowerCase().replace(/\s+/g, '_')
+  const id = `city_${slug}`
+  
   return prisma.city.create({
-    data: { name }
+    data: { id, name, tenant_id: DEFAULT_TENANT_ID }
   })
 }
 

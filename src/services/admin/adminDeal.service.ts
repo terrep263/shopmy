@@ -1,6 +1,8 @@
-import { prisma } from "@/lib/prisma"
+import prisma from "@/lib/prisma"
 import { generateDeal } from "@/services/dealGuard"
 import { logAdminAction } from "./adminLogger.service"
+
+const DEFAULT_TENANT_ID = "tenant_lake_county"
 
 export async function generateAdminDeal(
   adminId: string,
@@ -14,9 +16,7 @@ export async function generateAdminDeal(
     include: { business: true }
   })
 
-  if (!vendor || !vendor.business) {
-    throw new Error("Vendor not found")
-  }
+  if (!vendor || !vendor.business) throw new Error("Vendor not found")
 
   const ai = await generateDeal({
     businessName: vendor.business.name,
@@ -38,7 +38,8 @@ export async function generateAdminDeal(
       original_value: originalValue,
       expiration_date: new Date(expirationDate),
       status,
-      quality_score: qualityScore
+      quality_score: qualityScore,
+      tenant_id: vendor.tenant_id || DEFAULT_TENANT_ID
     }
   })
 

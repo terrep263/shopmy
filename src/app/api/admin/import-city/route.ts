@@ -1,27 +1,43 @@
-import { NextResponse } from "next/server"
-import { requireAdminUser } from "@/services/admin/adminAuth.service"
+import { NextRequest, NextResponse } from "next/server"
 import { importCityBusinesses } from "@/services/admin/adminImport.service"
+import { prisma } from "@/lib/prisma"
+import { verifyToken } from "@/lib/auth"
 
-export async function POST(req: Request) {
+async function getAdminId(req: NextRequest): Promise<string | null> {
+  // First try header set by middleware
+  const fromHeader = req.headers.get("x-admin-id")
+  if (fromHeader) return fromHeader
+
+  // Fallback: read token directly from cookie
+  const token = req.cookies.get("admin_token")?.value
+  if (!token) return null
+
   try {
-    const admin = await requireAdminUser()
-    const body = await req.json()
-    const { cityId, categoryId } = body
+    const decoded: any = verifyToken(token)
+    return decoded.userId || null
+  } catch {
+    return null
+  }
+}
 
-    if (!cityId || !categoryId) {
-      return NextResponse.json({ error: "Missing cityId or categoryId" }, { status: 400 })
-    }
+export async function POST(req: NextRequest) {
+  try {
+    const adminId = await getAdminId(req)
+    const { city, category } = await req.json()
 
-    const result = await importCityBusinesses(admin.id, cityId, categoryId)
+    if (!city || !category) return NextResponse.json({ error: "Missing city or category" }, { status: 400 })
+
+    const cityRecord = await prisma.city.findFirst({ where: { name: city } })
+    if (!cityRecord) return NextResponse.json({ error: `City not found: ${city}` }, { status: 400 })
+
+    const categoryRecord = await prisma.category.findFirst({ where: { google_type: category } })
+    if (!categoryRecord) return NextResponse.json({ error: `Category not found: ${category}` }, { status: 400 })
+
+    const result = await importCityBusinesses(adminId, cityRecord.id, categoryRecord.id)
     return NextResponse.json(result)
   } catch (err) {
     const message = err instanceof Error ? err.message : "Import failed"
-    if (message === "Forbidden") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-    if (message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    return NextResponse.json({ error: message }, { status: 400 })
+    console.error("[import-city]", message)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

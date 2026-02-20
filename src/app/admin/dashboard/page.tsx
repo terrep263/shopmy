@@ -69,7 +69,11 @@ export default function AdminDashboard() {
     const toolsByCategory = getToolsByAllCategories()
 
     useEffect(() => {
-        const opts = { credentials: "include" as RequestCredentials }
+        const token = document.cookie.match(/(?:^|;\s*)admin_token=([^;]+)/)?.[1]
+        const opts: RequestInit = {
+            credentials: "include",
+            headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : {}
+        }
 
         Promise.all([
             fetch("/api/admin/vendors", opts).then(res => res.json()),

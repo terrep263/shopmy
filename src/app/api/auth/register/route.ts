@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcrypt'
 import { signToken } from '@/lib/auth'
+import { resolveTenant } from '@/lib/tenantContext'
 
 export async function POST(req: Request) {
   try {
@@ -19,12 +20,14 @@ export async function POST(req: Request) {
       return new Response(JSON.stringify({ error: 'User exists' }), { status: 400, headers: { 'Content-Type': 'application/json' } })
 
     const hashed = await bcrypt.hash(password, 10)
+    const tenantId = await resolveTenant()
 
     const user = await prisma.user.create({
       data: {
         email,
         password_hash: hashed,
-        role: role || 'customer'
+        role: role || 'customer',
+        tenant_id: tenantId
       }
     })
 

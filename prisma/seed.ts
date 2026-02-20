@@ -2,6 +2,7 @@ import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import bcrypt from 'bcrypt'
+import { randomUUID } from 'crypto'
 
 let prisma: PrismaClient
 try {
@@ -16,19 +17,40 @@ try {
 async function main() {
   const tempPassword = 'changeme';
   const password_hash = await bcrypt.hash(tempPassword, 10)
+  const defaultTenantId = 'tenant_lake_county'
 
   try {
-    await prisma.user.upsert({
-      where: { email: 'admin@shopmyneighborhood.com' },
+    await prisma.tenant.upsert({
+      where: { id: defaultTenantId },
       update: {},
       create: {
-        email: 'admin@shopmyneighborhood.com',
-        password_hash,
+        id: defaultTenantId,
+        name: 'Lake County',
+        slug: 'lake',
+        domain: null,
+      },
+    })
+
+    // Hash the actual admin password
+    const adminPasswordHash = await bcrypt.hash('changeme', 10)
+
+    await prisma.user.upsert({
+      where: { email: 'admin@shopmyneighborhood.com' },
+      update: {
         role: 'admin',
+        tenant_id: defaultTenantId,
+        password_hash: adminPasswordHash,
+      },
+      create: {
+        id: randomUUID(),
+        email: 'admin@shopmyneighborhood.com',
+        password_hash: adminPasswordHash,
+        role: 'admin',
+        tenant_id: defaultTenantId,
       },
     })
     console.log('✅ Admin user created/updated: admin@shopmyneighborhood.com')
-    console.log('🔑 Temporary password: changeme (IMPORTANT: Change after first login)')
+    console.log('🔑 Password: changeme')
   } catch (error) {
     console.error('Error upserting admin user:', error)
     process.exit(1)

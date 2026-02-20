@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { getCurrentUser } from "@/lib/currentUser"
+import { resolveTenant } from "@/lib/tenantContext"
+import { tenantScope } from "@/lib/prismaTenant"
 
 export async function GET() {
 
@@ -10,9 +12,12 @@ export async function GET() {
       error: "Unauthorized"
     }), { status: 401, headers: { "Content-Type": "application/json" } })
 
-  const vendor = await prisma.vendor.findUnique({
+  const tenantId = await resolveTenant()
+
+  const vendor = await prisma.vendor.findFirst({
     where: {
-      user_id: user.userId
+      user_id: user.userId,
+      tenant_id: tenantId
     }
   })
 
@@ -21,7 +26,8 @@ export async function GET() {
       headers: { "Content-Type": "application/json" }
     })
 
-  const deals = await prisma.deal.findMany({
+  const db = await tenantScope()
+  const deals = await db.deal.findMany({
     where: {
       vendor_id: vendor.id
     },

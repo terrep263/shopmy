@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import prisma from "@/lib/prisma"
 
 export async function listAdminActions(page: number, pageSize: number) {
   const skip = (page - 1) * pageSize

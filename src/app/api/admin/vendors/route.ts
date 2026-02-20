@@ -1,38 +1,22 @@
-import { NextResponse } from "next/server"
-import { requireAdminUser } from "@/services/admin/adminAuth.service"
-import { listVendors, updateVendorStatus } from "@/services/admin/adminVendor.service"
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    await requireAdminUser()
-    const vendors = await listVendors()
+    const vendors = await prisma.vendor.findMany({ include: { business: true } })
     return NextResponse.json(vendors)
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unauthorized"
-    if (message === "Forbidden") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Error" }, { status: 500 })
   }
 }
 
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
   try {
-    const admin = await requireAdminUser()
-    const body = await req.json()
-    const { vendorId, status } = body
-
-    if (!vendorId || !status) {
-      return NextResponse.json({ error: "Missing vendorId or status" }, { status: 400 })
-    }
-
-    const vendor = await updateVendorStatus(admin.id, vendorId, status)
+    const { vendorId, status } = await req.json()
+    if (!vendorId || !status) return NextResponse.json({ error: "Missing fields" }, { status: 400 })
+    const vendor = await prisma.vendor.update({ where: { id: vendorId }, data: { subscription_status: status } })
     return NextResponse.json({ vendor })
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unauthorized"
-    if (message === "Forbidden") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-    return NextResponse.json({ error: message }, { status: 400 })
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Error" }, { status: 500 })
   }
 }

@@ -1,11 +1,12 @@
 import { Render } from "@measured/puck"
 import { config } from "@/../puck/puck.config"
-import { loadPuckData } from "@/lib/puckStorage"
+import { loadPagePuckData, loadPuckData } from "@/lib/puckStorage"
 
 export const dynamic = "force-dynamic"
 
 export default async function PuckPage() {
-  const data = await loadPuckData()
+  /* Try multi-page storage first, then fall back to legacy single-page */
+  const data = await loadPagePuckData("homepage") ?? await loadPuckData()
 
   return (
     <div className="puck-rendered-page">

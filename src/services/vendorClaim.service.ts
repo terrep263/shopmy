@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import prisma from "@/lib/prisma"
 
 export async function claimBusiness(userId: string, businessId: string) {
   const user = await prisma.user.findUnique({

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import AdminLayout from "@/components/admin/AdminLayout"
 import Link from "next/link"
+import { getAdminFetchOpts } from "@/lib/adminFetch"
 
 export default function AdminDealsPage() {
   const [data, setData] = useState<any[]>([])
@@ -10,7 +11,7 @@ export default function AdminDealsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch("/api/admin/deals", { credentials: "include" })
+    fetch("/api/admin/deals", getAdminFetchOpts())
       .then(res => {
         if (!res.ok) return null
         return res.json()

@@ -19,22 +19,17 @@ export default function AdminLogin() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        credentials: "include"
+        body: JSON.stringify({ email, password })
       })
 
+      const data = await res.json()
+
       if (!res.ok) {
-        const data = await res.json()
         throw new Error(data.error || "Login failed")
       }
 
-      const { token, role } = await res.json()
-      
-      if (role === "admin") {
-        router.push("/admin/dashboard")
-      } else {
-        throw new Error("Unauthorized: Admin role required")
-      }
+      router.push("/admin/dashboard")
+
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -53,12 +48,14 @@ export default function AdminLogin() {
       <div style={{
         width: "100%",
         maxWidth: "400px",
-        padding: "20px",
+        padding: "40px",
         backgroundColor: "white",
         borderRadius: "8px",
         boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
       }}>
-        <h1 style={{ textAlign: "center", marginBottom: "30px" }}>Admin Login</h1>
+        <h1 style={{ textAlign: "center", marginBottom: "30px", fontSize: "24px" }}>
+          Admin Login
+        </h1>
 
         {error && (
           <div style={{
@@ -117,13 +114,14 @@ export default function AdminLogin() {
             disabled={loading}
             style={{
               width: "100%",
-              padding: "10px",
+              padding: "12px",
               backgroundColor: "#007bff",
               color: "white",
               border: "none",
               borderRadius: "4px",
               cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.6 : 1
+              opacity: loading ? 0.6 : 1,
+              fontSize: "16px"
             }}
           >
             {loading ? "Logging in..." : "Login"}

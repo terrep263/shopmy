@@ -3,6 +3,7 @@ import { promises as fs } from "fs"
 import path from "path"
 
 const DATA_FILE = path.join(process.cwd(), "puck-data.json")
+const PAGES_DIR = path.join(process.cwd(), "puck-pages")
 
 // Default page data structure
 export const defaultPageData: Data = {
@@ -22,7 +23,7 @@ export const defaultPageData: Data = {
 }
 
 /**
- * Save Puck data to storage
+ * Save Puck data to storage (legacy — single page)
  */
 export async function savePuckData(data: Data): Promise<void> {
   try {
@@ -35,7 +36,7 @@ export async function savePuckData(data: Data): Promise<void> {
 }
 
 /**
- * Load Puck data from storage
+ * Load Puck data from storage (legacy — single page)
  */
 export async function loadPuckData(): Promise<Data> {
   try {
@@ -63,5 +64,62 @@ export async function puckDataExists(): Promise<boolean> {
     return true
   } catch {
     return false
+  }
+}
+
+/* ────────────────────────────────────────────
+   Multi-page Puck storage  (puck-pages/<id>.json)
+   ──────────────────────────────────────────── */
+
+function pageFile(pageId: string) {
+  // Sanitise id to prevent directory traversal
+  const safe = pageId.replace(/[^a-zA-Z0-9_-]/g, "")
+  return path.join(PAGES_DIR, `${safe}.json`)
+}
+
+/**
+ * Save Puck data for a specific page.
+ */
+export async function savePagePuckData(pageId: string, data: Data): Promise<void> {
+  await fs.mkdir(PAGES_DIR, { recursive: true })
+  await fs.writeFile(pageFile(pageId), JSON.stringify(data, null, 2), "utf-8")
+  console.log(`✅ Puck page data saved for "${pageId}"`)
+}
+
+/**
+ * Load Puck data for a specific page.
+ * Returns null when no customisation exists (so the route can fall back to theme).
+ */
+export async function loadPagePuckData(pageId: string): Promise<Data | null> {
+  try {
+    const content = await fs.readFile(pageFile(pageId), "utf-8")
+    return JSON.parse(content) as Data
+  } catch {
+    return null // no Puck override — use theme default
+  }
+}
+
+/**
+ * Delete Puck overrides for a page (revert to theme default).
+ */
+export async function deletePagePuckData(pageId: string): Promise<void> {
+  try {
+    await fs.unlink(pageFile(pageId))
+  } catch {
+    // already gone — fine
+  }
+}
+
+/**
+ * List all page IDs that have Puck overrides saved.
+ */
+export async function listPuckPages(): Promise<string[]> {
+  try {
+    const files = await fs.readdir(PAGES_DIR)
+    return files
+      .filter((f) => f.endsWith(".json"))
+      .map((f) => f.replace(/\.json$/, ""))
+  } catch {
+    return []
   }
 }

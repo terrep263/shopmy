@@ -10,8 +10,10 @@ import Footer from "@/components/theme/footer/footer"
 import BackToTop from "@/components/theme/back-to-top"
 import { categoryData } from "@/lib/theme-data"
 import { BsMouse, BsSearch, BsCheck2Circle, BsExclamationTriangle, BsInfoCircle, BsXCircle } from "react-icons/bs"
+import { IconType } from "react-icons"
 import Link from "next/link"
 import MediaLibraryField from "@/components/admin/MediaLibraryField"
+import React from "react"
 
 interface CategoryData {
   image: string
@@ -588,7 +590,7 @@ export const config: Config<UserConfig> = {
         color: "",
       },
       render: ({ text, level, align, color }) => {
-        const Tag = (level || "h2") as keyof JSX.IntrinsicElements
+        const Tag = (level || "h2") as keyof React.JSX.IntrinsicElements
         return <Tag style={{ textAlign: align as "left" | "center" | "right", color: color || 'inherit' }}>{text}</Tag>
       },
     },
@@ -802,25 +804,6 @@ export const config: Config<UserConfig> = {
             <p className="card-text">{content}</p>
             {buttonText && <a href="#" className="btn btn-primary">{buttonText}</a>}
           </div>
-        </div>
-      ),
-    },
-
-    StatsBlock: {
-      fields: {
-        value: { type: "text", label: "Value" },
-        label: { type: "text", label: "Label" },
-        suffix: { type: "text", label: "Suffix (e.g., +, %)" },
-      },
-      defaultProps: {
-        value: "1000",
-        label: "Happy Customers",
-        suffix: "+",
-      },
-      render: ({ value, label, suffix }) => (
-        <div className="text-center">
-          <div className="display-4 fw-bold text-primary">{value}{suffix}</div>
-          <p className="text-muted">{label}</p>
         </div>
       ),
     },

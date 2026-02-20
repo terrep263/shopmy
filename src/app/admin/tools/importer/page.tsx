@@ -36,17 +36,36 @@ export default function ImporterToolPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const opts = { credentials: "include" as RequestCredentials }
-    
+    const token = document.cookie.match(/(?:^|;\s*)admin_token=([^;]+)/)?.[1]
+    const opts: RequestInit = {
+      credentials: "include",
+      headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : {}
+    }
+
     Promise.all([
       fetch("/api/admin/cities", opts).then(res => res.json()),
       fetch("/api/admin/categories", opts).then(res => res.json())
     ])
     .then(([citiesRes, categoriesRes]) => {
+      console.log("[importer] Cities response:", citiesRes)
+      console.log("[importer] Categories response:", categoriesRes)
+      
+      if (citiesRes?.error) {
+        setError(`Failed to load cities: ${citiesRes.error}`)
+        return
+      }
+      if (categoriesRes?.error) {
+        setError(`Failed to load categories: ${categoriesRes.error}`)
+        return
+      }
+      
       if (Array.isArray(citiesRes)) setCities(citiesRes.filter(c => c.active))
       if (Array.isArray(categoriesRes)) setCategories(categoriesRes.filter(c => c.active))
     })
-    .catch(() => setError("Failed to load cities and categories"))
+    .catch((err) => {
+      console.error("[importer] Error loading data:", err)
+      setError("Failed to load cities and categories")
+    })
   }, [])
 
   const handleImport = async () => {
@@ -55,18 +74,31 @@ export default function ImporterToolPage() {
       return
     }
 
+    // Get the selected city and category names
+    const selectedCity = cities.find(c => String(c.id) === selectedCityId)
+    const selectedCategory = categories.find(c => String(c.id) === selectedCategoryId)
+
+    if (!selectedCity || !selectedCategory) {
+      alert('Selected city or category not found')
+      return
+    }
+
     setLoading(true)
     setResult(null)
     setError(null)
 
     try {
+      const token = document.cookie.match(/(?:^|;\s*)admin_token=([^;]+)/)?.[1]
       const res = await fetch('/api/admin/import-city', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : {})
+        },
         credentials: 'include',
         body: JSON.stringify({
-          cityId: parseInt(selectedCityId),
-          categoryId: parseInt(selectedCategoryId)
+          city: selectedCity.name,
+          category: selectedCategory.google_type
         })
       })
 

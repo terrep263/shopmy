@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
+import { requireAdmin } from '@/lib/adminAuth'
 
 export async function POST(request: Request) {
   try {
+    await requireAdmin()
     const formData = await request.formData()
     const file = formData.get('file') as File
     const type = formData.get('type') as string // 'logo', 'logo-light', or 'favicon'

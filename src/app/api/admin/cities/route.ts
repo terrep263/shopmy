@@ -1,58 +1,37 @@
-import { NextResponse } from "next/server"
-import { requireAdminUser } from "@/services/admin/adminAuth.service"
-import { createCity, listCities, toggleCity } from "@/services/admin/adminCity.service"
-import { logAdminAction } from "@/services/admin/adminLogger.service"
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    await requireAdminUser()
-    const cities = await listCities()
+    const cities = await prisma.city.findMany({ orderBy: { name: "asc" } })
     return NextResponse.json(cities)
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unauthorized"
-    if (message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Error" }, { status: 500 })
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const admin = await requireAdminUser()
-    const body = await req.json()
-    const { name } = body
-
+    const adminId = req.headers.get("x-admin-id")!
+    const { name } = await req.json()
     if (!name) return NextResponse.json({ error: "Missing name" }, { status: 400 })
-
-    const city = await createCity(name)
-    await logAdminAction(admin.id, "CREATE_CITY", "City", city.id, { name })
-
+    const city = await prisma.city.create({ data: { name, tenant_id: "tenant_lake_county" } })
+    await prisma.adminAction.create({ data: { admin_id: adminId, action_type: "CREATE_CITY", entity_type: "City", entity_id: city.id } })
     return NextResponse.json(city)
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unauthorized"
-    if (message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    if (message === "Unauthorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    return NextResponse.json({ error: message }, { status: 400 })
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Error" }, { status: 500 })
   }
 }
 
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
   try {
-    const admin = await requireAdminUser()
-    const body = await req.json()
-    const { id, active } = body
-
-    if (!id || typeof active !== "boolean") {
-      return NextResponse.json({ error: "Missing id or active" }, { status: 400 })
-    }
-
-    const city = await toggleCity(id, active)
-    await logAdminAction(admin.id, "TOGGLE_CITY", "City", id, { active })
-
+    const adminId = req.headers.get("x-admin-id")!
+    const { id, active } = await req.json()
+    if (!id || typeof active !== "boolean") return NextResponse.json({ error: "Missing fields" }, { status: 400 })
+    const city = await prisma.city.update({ where: { id }, data: { active } })
+    await prisma.adminAction.create({ data: { admin_id: adminId, action_type: "TOGGLE_CITY", entity_type: "City", entity_id: id, metadata: { active } } })
     return NextResponse.json(city)
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unauthorized"
-    if (message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    if (message === "Unauthorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    return NextResponse.json({ error: message }, { status: 400 })
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Error" }, { status: 500 })
   }
 }

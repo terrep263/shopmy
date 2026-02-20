@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import AdminLayout from "@/components/admin/AdminLayout"
 import Link from "next/link"
+import { getAdminFetchOpts } from "@/lib/adminFetch"
 
 export default function AdminVouchersPage() {
   const [data, setData] = useState<any[]>([])
@@ -10,7 +11,7 @@ export default function AdminVouchersPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch("/api/admin/vouchers?page=1&pageSize=50", { credentials: "include" })
+    fetch("/api/admin/vouchers?page=1&pageSize=50", getAdminFetchOpts())
       .then(res => {
         if (!res.ok) return null
         return res.json()

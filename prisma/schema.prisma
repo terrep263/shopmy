@@ -2,54 +2,131 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Production DATABASE_URL is set in env and prisma.config.ts (Prisma 7)
 datasource db {
   provider = "postgresql"
 }
 
+model Tenant {
+  id         String     @id
+  name       String
+  slug       String     @unique
+  domain     String?
+  created_at DateTime   @default(now())
+  businesses Business[]
+  categories Category[]
+  cities     City[]
+  deals      Deal[]
+  vendors    Vendor[]
+  vouchers   Voucher[]
+}
+
 model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
+  id            String        @id
+  email         String        @unique
   password_hash String
   role          Role
-  created_at    DateTime @default(now())
-
-  vendor        Vendor?
+  created_at    DateTime      @default(now())
+  tenant_id     String?
   admin_actions AdminAction[]
+  vendors       Vendor[]
 }
 
 model Business {
-  id              String   @id @default(uuid())
-  google_place_id String   @unique
+  id              String    @id
+  google_place_id String
   name            String
   address         String
   city            String
   category        String
   latitude        Float
   longitude       Float
-  claimed         Boolean  @default(false)
-  created_at      DateTime @default(now())
+  claimed         Boolean   @default(false)
+  created_at      DateTime  @default(now())
+  tenant_id       String
+  categoryId      String?
+  cityId          String?
 
-  vendor          Vendor?
+  // Google Places extended fields
+  primary_type                String?
+  types                       Json?
+  business_status             String?
+  street_number               String?
+  route                       String?
+  state                       String?
+  postal_code                 String?
+  country                     String?
+  viewport_northeast_lat      Float?
+  viewport_northeast_lng      Float?
+  viewport_southwest_lat      Float?
+  viewport_southwest_lng      Float?
+  national_phone_number       String?
+  international_phone_number  String?
+  website_uri                 String?
+  google_maps_uri             String?
+  rating                      Decimal?  @db.Decimal(2, 1)
+  user_rating_count           Int?
+  price_level                 Int?
+  price_range                 String?
+  regular_opening_hours       Json?
+  current_opening_hours       Json?
+  utc_offset_minutes          Int?
+  time_zone                   String?
+  photo_references            Json?
+  icon_mask_base_uri          String?
+  icon_background_color       String?
+
+  // Platform fields
+  is_verified                 Boolean?  @default(false)
+  claim_status                String?
+  claim_date                  DateTime?
+
+  // AI enrichment
+  ai_summary                  String?
+  ai_quality_score            Int?
+  ai_last_updated             DateTime?
+
+  // Sync tracking
+  google_last_sync            DateTime?
+
+  // Additional details
+  editorial_summary           String?
+  parking_options             Json?
+  payment_options             Json?
+  accessibility_options       Json?
+  delivery                    Boolean?
+  takeout                     Boolean?
+  dine_in                     Boolean?
+  reservable                  Boolean?
+
+  // Timestamps
+  updated_at                  DateTime?
+  deleted_at                  DateTime?
+
+  // Relations
+  tenant                      Tenant    @relation(fields: [tenant_id], references: [id])
+  city_rel                    City?     @relation(fields: [cityId], references: [id])
+  category_rel                Category? @relation(fields: [categoryId], references: [id])
+  vendors                     Vendor[]
 }
 
 model Vendor {
-  id                        String   @id @default(uuid())
-  user_id                   String   @unique
-  business_id               String   @unique
-  subscription_status       SubscriptionStatus
-  subscription_plan         String?
-  subscription_expires_at   DateTime?
-  created_at                DateTime @default(now())
-
-  user       User      @relation(fields: [user_id], references: [id])
-  business   Business  @relation(fields: [business_id], references: [id])
-  deals      Deal[]
-  subscription Subscription?
+  id                      String             @id
+  user_id                 String
+  business_id             String
+  subscription_status     SubscriptionStatus
+  subscription_plan       String?
+  subscription_expires_at DateTime?
+  created_at              DateTime           @default(now())
+  tenant_id               String
+  business                Business           @relation(fields: [business_id], references: [id])
+  tenant                  Tenant             @relation(fields: [tenant_id], references: [id])
+  user                    User               @relation(fields: [user_id], references: [id])
+  deals                   Deal[]
+  subscription            Subscription?
 }
 
 model Deal {
-  id              String   @id @default(uuid())
+  id              String     @id
   vendor_id       String
   title           String
   description     String
@@ -58,42 +135,89 @@ model Deal {
   expiration_date DateTime
   status          DealStatus
   quality_score   Int
-  created_at      DateTime @default(now())
-
-  vendor   Vendor   @relation(fields: [vendor_id], references: [id])
-  vouchers Voucher[]
+  created_at      DateTime   @default(now())
+  tenant_id       String
+  vendor          Vendor     @relation(fields: [vendor_id], references: [id])
+  tenant          Tenant     @relation(fields: [tenant_id], references: [id])
+  vouchers        Voucher[]
 }
 
 model Voucher {
-  id             String   @id @default(uuid())
+  id             String             @id
   deal_id        String
-  uuid           String   @unique
+  uuid           String             @unique
   customer_email String
   status         VoucherStatus
-  issued_at      DateTime @default(now())
+  issued_at      DateTime           @default(now())
   expires_at     DateTime
-
-  deal        Deal               @relation(fields: [deal_id], references: [id])
-  redemption  VoucherRedemption?
+  tenant_id      String
+  deal           Deal               @relation(fields: [deal_id], references: [id])
+  tenant         Tenant             @relation(fields: [tenant_id], references: [id])
+  redemption     VoucherRedemption?
 }
 
 model VoucherRedemption {
-  id                  String   @id @default(uuid())
-  voucher_id          String   @unique
-  redeemed_by_vendor  String
-  redeemed_at         DateTime @default(now())
-
-  voucher Voucher @relation(fields: [voucher_id], references: [id])
+  id                 String   @id
+  voucher_id         String   @unique
+  redeemed_by_vendor String
+  redeemed_at        DateTime @default(now())
+  tenant_id          String?
+  voucher            Voucher  @relation(fields: [voucher_id], references: [id])
 }
 
 model Subscription {
-  id         String   @id @default(uuid())
-  vendor_id  String   @unique
+  id         String             @id
+  vendor_id  String             @unique
   plan       String
   status     SubscriptionStatus
   expires_at DateTime
+  tenant_id  String?
+  vendor     Vendor             @relation(fields: [vendor_id], references: [id])
+}
 
-  vendor Vendor @relation(fields: [vendor_id], references: [id])
+model City {
+  id               String     @id
+  name             String
+  active           Boolean    @default(true)
+  last_imported_at DateTime?
+  created_at       DateTime   @default(now())
+  tenant_id        String
+  tenant           Tenant     @relation(fields: [tenant_id], references: [id])
+  businesses       Business[]
+}
+
+model Category {
+  id          String     @id
+  name        String
+  google_type String
+  active      Boolean    @default(true)
+  created_at  DateTime   @default(now())
+  tenant_id   String
+  tenant      Tenant     @relation(fields: [tenant_id], references: [id])
+  businesses  Business[]
+}
+
+model AdminAction {
+  id          String   @id
+  admin_id    String
+  action_type String
+  entity_type String
+  entity_id   String?
+  metadata    Json?
+  created_at  DateTime @default(now())
+  tenant_id   String?
+  admin       User     @relation(fields: [admin_id], references: [id])
+}
+
+model BrandingSettings {
+  id             String   @id
+  primary_color  String   @default("#c71f37")
+  logo_url       String?
+  logo_light_url String?
+  site_name      String   @default("Shop My Neighborhood")
+  favicon_url    String?
+  updated_at     DateTime @updatedAt
+  created_at     DateTime @default(now())
 }
 
 enum Role {
@@ -119,43 +243,4 @@ enum VoucherStatus {
   issued
   redeemed
   expired
-}
-
-model City {
-  id               String   @id @default(uuid())
-  name             String   @unique
-  active           Boolean  @default(true)
-  last_imported_at DateTime?
-  created_at       DateTime @default(now())
-}
-
-model Category {
-  id          String   @id @default(uuid())
-  name        String
-  google_type String
-  active      Boolean  @default(true)
-  created_at  DateTime @default(now())
-}
-
-model AdminAction {
-  id          String   @id @default(uuid())
-  admin_id    String
-  action_type String
-  entity_type String
-  entity_id   String?
-  metadata    Json?
-  created_at  DateTime @default(now())
-
-  admin User @relation(fields: [admin_id], references: [id])
-}
-
-model BrandingSettings {
-  id                String   @id @default(uuid())
-  primary_color     String   @default("#c71f37")
-  logo_url          String?
-  logo_light_url    String?
-  site_name         String   @default("Shop My Neighborhood")
-  favicon_url       String?
-  updated_at        DateTime @updatedAt
-  created_at        DateTime @default(now())
 }

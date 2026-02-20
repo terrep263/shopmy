@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import prisma from "@/lib/prisma"
 import { logAdminAction } from "./adminLogger.service"
 
 export async function listVendors() {
@@ -17,8 +17,6 @@ export async function updateVendorStatus(adminId: string, vendorId: string, stat
     where: { id: vendorId },
     data: { subscription_status: status }
   })
-
   await logAdminAction(adminId, "UPDATE_VENDOR_STATUS", "Vendor", vendorId, { status })
-
   return vendor
 }

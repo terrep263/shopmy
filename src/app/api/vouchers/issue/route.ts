@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { generateQRCode } from "@/services/qrCode"
 import { generateVoucherPDF } from "@/services/voucherPdf"
 import crypto from "crypto"
+import { resolveTenant } from "@/lib/tenantContext"
 
 export async function POST(req: Request) {
 
@@ -25,8 +26,10 @@ export async function POST(req: Request) {
         error: "dealId and customerEmail required"
       }), { status: 400, headers: { "Content-Type": "application/json" } })
 
-    const deal = await prisma.deal.findUnique({
-      where: { id: dealId }
+    const tenantId = await resolveTenant()
+
+    const deal = await prisma.deal.findFirst({
+      where: { id: dealId, tenant_id: tenantId }
     })
 
     if (!deal)
@@ -42,7 +45,8 @@ export async function POST(req: Request) {
         uuid,
         customer_email: customerEmail,
         status: "issued",
-        expires_at: deal.expiration_date
+        expires_at: deal.expiration_date,
+        tenant_id: tenantId
       }
     })
 

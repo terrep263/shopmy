@@ -4,6 +4,12 @@
   },
   "content": [
     {
+      "type": "NavbarBlock",
+      "props": {
+        "id": "NavbarBlock-a0cd3aa0-4c44-4d4b-84da-24a8c25d5ea9"
+      }
+    },
+    {
       "type": "HeroBlock",
       "props": {
         "id": "hero-1",

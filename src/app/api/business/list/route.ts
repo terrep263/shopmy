@@ -1,7 +1,8 @@
-import { prisma } from "@/lib/prisma"
+import { tenantScope } from "@/lib/prismaTenant"
 
 export async function GET() {
-  const businesses = await prisma.business.findMany({
+  const db = await tenantScope()
+  const businesses = await db.business.findMany({
     orderBy: { name: "asc" }
   })
 

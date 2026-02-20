@@ -1,37 +1,13 @@
+import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { requireAdmin } from "@/lib/adminGuard"
 
-export async function GET() {
-
+export async function GET(req: NextRequest) {
   try {
-
-    await requireAdmin()
-
     const deals = await prisma.deal.findMany({
-
-      include: {
-        vendor: {
-          include: {
-            business: true
-          }
-        }
-      },
-
-      orderBy: {
-        created_at: "desc"
-      }
-
+      include: { vendor: { include: { business: true } } }
     })
-
-    return new Response(JSON.stringify(deals), {
-      headers: { "Content-Type": "application/json" }
-    })
-
+    return NextResponse.json(deals)
   } catch (err) {
-
-    const message = err instanceof Error ? err.message : "Unauthorized"
-    if (message === "Forbidden")
-      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { "Content-Type": "application/json" } })
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } })
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Error" }, { status: 500 })
   }
 }

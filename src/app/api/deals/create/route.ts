@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { getCurrentUser } from "@/lib/currentUser"
 import { generateDeal } from "@/services/dealGuard"
+import { resolveTenant } from "@/lib/tenantContext"
 
 export async function POST(req: Request) {
 
@@ -13,9 +14,12 @@ export async function POST(req: Request) {
         error: "Unauthorized"
       }), { status: 401, headers: { "Content-Type": "application/json" } })
 
-    const vendor = await prisma.vendor.findUnique({
+    const tenantId = await resolveTenant()
+
+    const vendor = await prisma.vendor.findFirst({
       where: {
-        user_id: user.userId
+        user_id: user.userId,
+        tenant_id: tenantId
       },
       include: {
         business: true
@@ -55,7 +59,8 @@ export async function POST(req: Request) {
         original_value: Number(originalValue),
         expiration_date: new Date(expirationDate),
         quality_score: qualityScore,
-        status: qualityScore >= 50 ? "published" : "pending_review"
+        status: qualityScore >= 50 ? "published" : "pending_review",
+        tenant_id: tenantId
       }
     })
 

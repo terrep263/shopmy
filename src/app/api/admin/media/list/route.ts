@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { listUploadedFiles } from "@/lib/media"
-import { requireAdmin } from "@/lib/adminGuard"
+import { requireAdmin } from "@/lib/adminAuth"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"

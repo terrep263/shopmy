@@ -1,10 +1,9 @@
-import { prisma } from "@/lib/prisma"
+import prisma from "@/lib/prisma"
 
 export async function listVouchers(params: { page: number; pageSize: number; status?: string }) {
   const { page, pageSize, status } = params
   const skip = (page - 1) * pageSize
-
-  const where = status ? { status } : {}
+  const where = status ? { status: status as any } : {}
 
   const [items, total] = await prisma.$transaction([
     prisma.voucher.findMany({

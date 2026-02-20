@@ -1,19 +1,26 @@
 import { Render } from "@measured/puck"
 import { config } from "@/../puck/puck.config"
-import { loadPuckData } from "@/lib/puckStorage"
+import { loadPagePuckData } from "@/lib/puckStorage"
+import HomePage from "@/theme/listinghub/HomePage"
 
 export const dynamic = "force-dynamic"
 
 /**
- * Homepage - Now powered by Puck visual editor
- * Edit at /admin/editor and changes will appear here
+ * Homepage — renders Puck data if customised, otherwise ListingHub theme.
+ * Edit at /admin/editor/homepage
  */
 export default async function Home() {
-  const data = await loadPuckData()
+  const data = await loadPagePuckData("homepage")
 
-  return (
-    <div className="puck-rendered-page">
-      <Render config={config} data={data} />
-    </div>
-  )
+  /* If the admin has published Puck content for this page, render it */
+  if (data) {
+    return (
+      <div className="puck-rendered-page">
+        <Render config={config} data={data} />
+      </div>
+    )
+  }
+
+  /* Otherwise render the ListingHub theme page */
+  return <HomePage />
 }

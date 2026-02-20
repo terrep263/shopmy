@@ -1,23 +1,24 @@
-import { NextResponse } from "next/server"
-import { requireAdminUser } from "@/services/admin/adminAuth.service"
-import { listVouchers } from "@/services/admin/adminVoucher.service"
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
-    await requireAdminUser()
-
     const { searchParams } = new URL(req.url)
     const page = Number(searchParams.get("page") || 1)
-    const pageSize = Number(searchParams.get("pageSize") || 20)
+    const pageSize = Number(searchParams.get("pageSize") || 50)
     const status = searchParams.get("status") || undefined
-
-    const result = await listVouchers({ page, pageSize, status })
-    return NextResponse.json(result)
+    const where = status ? { status: status as any } : {}
+    const [items, total] = await Promise.all([
+      prisma.voucher.findMany({
+        where,
+        include: { deal: { include: { vendor: { include: { business: true } } } } },
+        skip: (page - 1) * pageSize,
+        take: pageSize
+      }),
+      prisma.voucher.count({ where })
+    ])
+    return NextResponse.json({ items, total, page, pageSize })
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unauthorized"
-    if (message === "Forbidden") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Error" }, { status: 500 })
   }
 }

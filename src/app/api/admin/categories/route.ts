@@ -1,58 +1,37 @@
-import { NextResponse } from "next/server"
-import { requireAdminUser } from "@/services/admin/adminAuth.service"
-import { createCategory, listCategories, toggleCategory } from "@/services/admin/adminCategory.service"
-import { logAdminAction } from "@/services/admin/adminLogger.service"
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    await requireAdminUser()
-    const categories = await listCategories()
+    const categories = await prisma.category.findMany({ orderBy: { name: "asc" } })
     return NextResponse.json(categories)
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unauthorized"
-    if (message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Error" }, { status: 500 })
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const admin = await requireAdminUser()
-    const body = await req.json()
-    const { name, googleType } = body
-
-    if (!name || !googleType) return NextResponse.json({ error: "Missing name or googleType" }, { status: 400 })
-
-    const category = await createCategory(name, googleType)
-    await logAdminAction(admin.id, "CREATE_CATEGORY", "Category", category.id, { name, googleType })
-
+    const adminId = req.headers.get("x-admin-id")!
+    const { name, googleType } = await req.json()
+    if (!name || !googleType) return NextResponse.json({ error: "Missing fields" }, { status: 400 })
+    const category = await prisma.category.create({ data: { name, google_type: googleType, tenant_id: "tenant_lake_county" } })
+    await prisma.adminAction.create({ data: { admin_id: adminId, action_type: "CREATE_CATEGORY", entity_type: "Category", entity_id: category.id } })
     return NextResponse.json(category)
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unauthorized"
-    if (message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    if (message === "Unauthorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    return NextResponse.json({ error: message }, { status: 400 })
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Error" }, { status: 500 })
   }
 }
 
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
   try {
-    const admin = await requireAdminUser()
-    const body = await req.json()
-    const { id, active } = body
-
-    if (!id || typeof active !== "boolean") {
-      return NextResponse.json({ error: "Missing id or active" }, { status: 400 })
-    }
-
-    const category = await toggleCategory(id, active)
-    await logAdminAction(admin.id, "TOGGLE_CATEGORY", "Category", id, { active })
-
+    const adminId = req.headers.get("x-admin-id")!
+    const { id, active } = await req.json()
+    if (!id || typeof active !== "boolean") return NextResponse.json({ error: "Missing fields" }, { status: 400 })
+    const category = await prisma.category.update({ where: { id }, data: { active } })
+    await prisma.adminAction.create({ data: { admin_id: adminId, action_type: "TOGGLE_CATEGORY", entity_type: "Category", entity_id: id, metadata: { active } } })
     return NextResponse.json(category)
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unauthorized"
-    if (message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    if (message === "Unauthorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    return NextResponse.json({ error: message }, { status: 400 })
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Error" }, { status: 500 })
   }
 }

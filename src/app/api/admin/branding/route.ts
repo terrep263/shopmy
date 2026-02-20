@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import prisma from '@/lib/prisma'
+import { requireAdmin } from '@/lib/adminAuth'
 
 export async function GET() {
   try {
@@ -27,6 +28,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await requireAdmin()
     const body = await request.json()
     const { primary_color, logo_url, logo_light_url, site_name, favicon_url } = body
     
