@@ -2,6 +2,8 @@ import { Render } from "@measured/puck"
 import { config } from "@/../puck/puck.config"
 import { loadPagePuckData } from "@/lib/puckStorage"
 import HomePage from "@/theme/listinghub/HomePage"
+import { getBusinesses } from "@/lib/data/businesses"
+import { getCategories } from "@/lib/data/categories"
 
 export const dynamic = "force-dynamic"
 
@@ -21,6 +23,12 @@ export default async function Home() {
     )
   }
 
+  /* Fetch live data for the theme page */
+  const [businesses, categories] = await Promise.all([
+    getBusinesses(),
+    getCategories(),
+  ])
+
   /* Otherwise render the ListingHub theme page */
-  return <HomePage />
+  return <HomePage businesses={businesses} categories={categories} />
 }

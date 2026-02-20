@@ -13,11 +13,20 @@ import Footer from '@/components/theme/footer/footer'
 import BackToTop from '@/components/theme/back-to-top'
 
 import { listData } from '@/lib/theme-data'
+import { businessToListItem } from '@/lib/data/mappers'
+import type { SerializableBusiness } from '@/lib/data/types'
 
 import { FaArrowLeft, FaArrowRight, FaHeart, FaLocationDot, FaStar } from 'react-icons/fa6'
 import { BsCoin, BsLightningChargeFill, BsPatchCheckFill, BsTelephone } from 'react-icons/bs'
 
-export default function ListLayout02() {
+interface ListLayout02Props {
+  businesses?: SerializableBusiness[]
+}
+
+export default function ListLayout02({ businesses }: ListLayout02Props) {
+  const items = businesses && businesses.length > 0
+    ? businesses.map(businessToListItem)
+    : listData
   return (
     <>
       <NavLightTwo />
@@ -30,7 +39,7 @@ export default function ListLayout02() {
           <div className="row align-items-center justify-content-between mb-4">
             <div className="col-xl-5 col-lg-5 col-md-5 col-sm-6 col-6">
               <div className="totalListingshow">
-                <h6 className="fw-medium mb-0">106 Listings Found</h6>
+                <h6 className="fw-medium mb-0">{items.length} Listings Found</h6>
               </div>
             </div>
             <div className="col-xl-5 col-lg-5 col-md-5 col-sm-6 col-6">
@@ -57,7 +66,7 @@ export default function ListLayout02() {
           </div>
 
           <div className="row align-items-center justify-content-center g-xl-4 g-3">
-            {listData.slice(0, 8).map((item, index) => {
+            {items.slice(0, 8).map((item, index) => {
               const Icon = item.tagIcon
               return (
                 <div className="col-xl-6 col-lg-12 col-md-12 col-sm-12" key={index}>

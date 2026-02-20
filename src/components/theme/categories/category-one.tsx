@@ -18,10 +18,20 @@ export interface CategoryDataItem {
 
 interface CategoryOneProps {
   categories?: CategoryDataItem[];
+  dbCategories?: import('@/lib/data/types').SerializableCategory[];
 }
 
-export default function CategoryOne({ categories }: CategoryOneProps) {
-  const data = categories ?? categoryData;
+export default function CategoryOne({ categories, dbCategories }: CategoryOneProps) {
+  /* If raw DB categories passed, map to template format (client-side so icons work) */
+  let data: CategoryDataItem[]
+  if (categories) {
+    data = categories
+  } else if (dbCategories && dbCategories.length > 0) {
+    const { categoryToDisplayItem } = require('@/lib/data/mappers')
+    data = dbCategories.map(categoryToDisplayItem)
+  } else {
+    data = categoryData
+  }
   return (
     <div className="row align-items-center justify-content-center">
         <div className="col-xl-12 col-lg-12 col-md-12 col-sm-12">

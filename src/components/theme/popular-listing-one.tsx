@@ -14,7 +14,7 @@ import { BsGeoAlt, BsPatchCheckFill, BsStar, BsSuitHeart, BsTelephone } from 're
 import { IconType } from 'react-icons';
 
 export interface ListDataItem {
-    id: number;
+    id: number | string;
     image: string;
     user: string;
     status: string;
@@ -34,11 +34,21 @@ export interface ListDataItem {
 
 interface PopularListingOneProps {
   listings?: ListDataItem[];
+  businesses?: import('@/lib/data/types').SerializableBusiness[];
 }
 
-export default function PopularListingOne({ listings }: PopularListingOneProps) {
-  const data = listings ?? listData;
-  const listingHref = (id: number) => `/deals/${id}`;
+export default function PopularListingOne({ listings, businesses }: PopularListingOneProps) {
+  /* If raw DB data passed, map to template format (client-side so icons work) */
+  let data: ListDataItem[]
+  if (listings) {
+    data = listings
+  } else if (businesses && businesses.length > 0) {
+    const { businessToListItem } = require('@/lib/data/mappers')
+    data = businesses.map(businessToListItem)
+  } else {
+    data = listData
+  }
+  const listingHref = (id: number | string) => `/business/${id}`;
   return (
     <div className="row align-items-center justify-content-center">
         <div className="col-xl-12 col-lg-12 col-md-12 col-sm-12">

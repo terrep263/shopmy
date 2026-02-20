@@ -14,6 +14,8 @@ import Footer from '@/components/theme/footer/footer'
 import BackToTop from '@/components/theme/back-to-top'
 
 import { listData } from '@/lib/theme-data'
+import { businessToListItem } from '@/lib/data/mappers'
+import type { SerializableBusiness } from '@/lib/data/types'
 
 import { BsEyeFill, BsGeoAlt, BsPatchCheckFill, BsShareFill, BsStar, BsSuitHeart, BsTelephone } from 'react-icons/bs'
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6'
@@ -24,7 +26,15 @@ declare global {
   }
 }
 
-export default function GridLayout04() {
+interface GridLayout04Props {
+  businesses?: SerializableBusiness[]
+}
+
+export default function GridLayout04({ businesses }: GridLayout04Props) {
+  const items = businesses && businesses.length > 0
+    ? businesses.map(businessToListItem)
+    : listData
+
   useEffect(() => {
     if (typeof window === 'undefined' || !window.bootstrap?.Tooltip) return
     const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
@@ -46,7 +56,7 @@ export default function GridLayout04() {
           <div className="row align-items-center justify-content-between mb-4">
             <div className="col-xl-5 col-lg-5 col-md-5 col-sm-6 col-6">
               <div className="totalListingshow">
-                <h6 className="fw-medium text-md mb-0">106 Listings Found</h6>
+                <h6 className="fw-medium text-md mb-0">{items.length} Listings Found</h6>
               </div>
             </div>
             <div className="col-xl-5 col-lg-5 col-md-5 col-sm-6 col-6">
@@ -73,7 +83,7 @@ export default function GridLayout04() {
           </div>
 
           <div className="row align-items-center justify-content-center g-xl-4 g-3">
-            {listData.map((item, index) => {
+            {items.map((item, index) => {
               const Icon = item.tagIcon
               return (
                 <div className="col-xl-4 col-lg-4 col-md-6 col-sm-12 col-12" key={index}>

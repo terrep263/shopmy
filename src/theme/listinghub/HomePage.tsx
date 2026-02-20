@@ -14,8 +14,15 @@ import FooterTop from "@/components/theme/footer-top"
 import Footer from "@/components/theme/footer/footer"
 import BackToTop from "@/components/theme/back-to-top"
 import { BsMouse } from "react-icons/bs"
+import type { SerializableBusiness } from '@/lib/data/types'
+import type { SerializableCategory } from '@/lib/data/types'
 
-export default function HomePage() {
+interface HomePageProps {
+  businesses?: SerializableBusiness[]
+  categories?: SerializableCategory[]
+}
+
+export default function HomePage({ businesses, categories }: HomePageProps) {
   return (
     <>
       <NavbarDark />
@@ -77,7 +84,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <CategoryOne />
+          <CategoryOne dbCategories={categories} />
         </div>
       </section>
 
@@ -91,7 +98,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <PopularListingOne />
+          <PopularListingOne businesses={businesses} />
         </div>
       </section>
 

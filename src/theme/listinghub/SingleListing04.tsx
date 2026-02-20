@@ -20,13 +20,32 @@ import BackToTop from '@/components/theme/back-to-top'
 
 import { FaLocationDot } from 'react-icons/fa6'
 import { BsBriefcase, BsStarFill, BsStarHalf, BsTelephone } from 'react-icons/bs'
+import type { SerializableBusiness } from '@/lib/data/types'
 
-export default function SingleListing04() {
+interface SingleListing04Props {
+  business?: SerializableBusiness
+}
+
+export default function SingleListing04({ business }: SingleListing04Props) {
+  /* Dynamic values fall back to template defaults when no business data */
+  const title = business?.name ?? 'Christmas Monday'
+  const location = business
+    ? `${business.city}${business.state ? ', ' + business.state : ''}`
+    : 'Old Paris, France'
+  const category = business?.category ?? business?.primary_type ?? 'Events'
+  const phone = business?.national_phone_number ?? business?.international_phone_number ?? ''
+  const heroImage = business?.photo_references?.[0] || '/img/single-4.jpg'
+  const avatarImage = business?.photo_references?.[1] || '/img/logo-4.png'
+  const reviewCount = business?.user_rating_count ?? '2k'
+  const rating = business?.rating != null ? Number(business.rating) : 4.5
+  const fullStars = Math.floor(rating)
+  const hasHalf = rating % 1 >= 0.25
+
   return (
     <>
       <NavbarDark />
 
-      <section className="bg-cover position-relative ht-500 py-0" style={{ backgroundImage: `url('/img/single-4.jpg')` }} data-overlay="4">
+      <section className="bg-cover position-relative ht-500 py-0" style={{ backgroundImage: `url('${heroImage}')` }} data-overlay="4">
         <div className="container h-100">
           <div className="row align-items-start">
             <div className="col-xl-12 col-lg-12 col-md-12 col-12">
@@ -36,24 +55,27 @@ export default function SingleListing04() {
                     <div className="listingFirstinfo d-flex align-items-center justify-content-start gap-3 flex-wrap">
                       <div className="listingAvatar">
                         <Link href="#" className="d-block">
-                          <Image src="/img/logo-4.png" width={95} height={95} className="img-fluid rounded-3" alt="Avatar" />
+                          <Image src={avatarImage} width={95} height={95} className="img-fluid rounded-3" alt="Avatar" />
                         </Link>
                       </div>
                       <div className="listingCaptioninfo">
                         <div className="propertyTitlename d-flex align-items-center gap-2 mb-1">
-                          <h2 className="fw-semibold text-light mb-0">Christmas Monday</h2>
+                          <h2 className="fw-semibold text-light mb-0">{title}</h2>
                           <span className="verified mt-1"><img src="/img/tick.svg" className="img-fluid" width="22" alt="Verified Listing" /></span>
                         </div>
                         <div className="listingsbasicInfo">
                           <div className="d-flex align-items-center justify-content-start flex-wrap gap-2">
-                            <div className="flexItem me-2"><span className="text-md fw-medium text-light"><FaLocationDot className="me-2" />Old Paris, France</span></div>
-                            <div className="flexItem me-2"><span className="text-md fw-medium text-light"><BsBriefcase className="me-2" />Events</span></div>
+                            <div className="flexItem me-2"><span className="text-md fw-medium text-light"><FaLocationDot className="me-2" />{location}</span></div>
+                            <div className="flexItem me-2"><span className="text-md fw-medium text-light"><BsBriefcase className="me-2" />{category}</span></div>
                             <div className="flexItem">
                               <div className="d-flex align-items-center justify-content-start gap-2">
                                 <div className="d-flex align-items-center justify-content-start gap-1">
-                                  <BsStarFill className="text-warning text-sm" /><BsStarFill className="text-warning text-sm" /><BsStarFill className="text-warning text-sm" /><BsStarFill className="text-warning text-sm" /><BsStarHalf className="text-warning text-sm" />
+                                  {Array.from({ length: fullStars }).map((_, i) => (
+                                    <BsStarFill key={`full-${i}`} className="text-warning text-sm" />
+                                  ))}
+                                  {hasHalf && <BsStarHalf className="text-warning text-sm" />}
                                 </div>
-                                <span className="text-md fw-medium text-light">(2k Reviews)</span>
+                                <span className="text-md fw-medium text-light">({reviewCount} Reviews)</span>
                               </div>
                             </div>
                           </div>
@@ -68,7 +90,7 @@ export default function SingleListing04() {
                         <span className="fw-bold text-md text-light">24 Nov 2024 - 10:30AM To 14:30PM</span>
                       </div>
                       <div className="flexlastButton">
-                        <button type="button" className="btn px-4 btn-whites text-primary fw-medium rounded-pill"><BsTelephone className="me-2" />Call Now</button>
+                        <button type="button" className="btn px-4 btn-whites text-primary fw-medium rounded-pill"{...(phone ? { onClick: () => window.open(`tel:${phone}`) } : {})}><BsTelephone className="me-2" />{phone || 'Call Now'}</button>
                       </div>
                     </div>
                   </div>

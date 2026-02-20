@@ -2,6 +2,7 @@ import { Render } from "@measured/puck"
 import { config } from "@/../puck/puck.config"
 import { loadPagePuckData } from "@/lib/puckStorage"
 import ListLayout02 from "@/theme/listinghub/ListLayout02"
+import { getBusinesses } from "@/lib/data/businesses"
 
 export const dynamic = "force-dynamic"
 
@@ -19,5 +20,7 @@ export default async function ExploreListPage() {
     )
   }
 
-  return <ListLayout02 />
+  const businesses = await getBusinesses()
+
+  return <ListLayout02 businesses={businesses} />
 }
